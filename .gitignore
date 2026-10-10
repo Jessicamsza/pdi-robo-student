@@ -4,4 +4,4 @@ __pycache__/
 .pytest_cache/
 .env
 firmware/ESP32CAM_L298N_Web/wifi_secrets.h
-
+*.mp4

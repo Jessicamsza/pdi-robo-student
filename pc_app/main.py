@@ -3,6 +3,8 @@ import time
 
 import pygame
 
+import image_processing
+
 from camera_viewer import CameraViewer
 from config import (
     APP_VERSION,
@@ -176,6 +178,16 @@ def main():
 
                 if event.key == pygame.K_ESCAPE:
                     running = False
+
+                # --- Atalhos para troca de modos de processamento de imagem ---
+                elif event.key == pygame.K_0 or event.key == pygame.K_KP0:
+                    image_processing.set_modo(0)
+                elif event.key == pygame.K_1 or event.key == pygame.K_KP1:
+                    image_processing.set_modo(1)
+                elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
+                    image_processing.set_modo(2)
+
+
                 elif event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
                     speed = min(MAX_SPEED, speed + SPEED_STEP)
                     robot.set_speed(speed)
