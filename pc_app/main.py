@@ -4,7 +4,6 @@ import time
 import pygame
 
 import image_processing
-
 from camera_viewer import CameraViewer
 from config import (
     APP_VERSION,
@@ -38,6 +37,7 @@ from gateway_client import GatewayRobotClient
 from image_processing import process_frame
 from media_source import MediaFileSource
 from null_robot_client import NullRobotClient
+from painel_pdi import PainelPDI
 from robot_client import RobotClient
 
 
@@ -149,6 +149,7 @@ def main():
     screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
     pygame.display.set_caption(f"pdi student console v{APP_VERSION}")
     clock = pygame.time.Clock()
+    painel = PainelPDI()
 
     font = pygame.font.SysFont("monospace", 24)
     small_font = pygame.font.SysFont("monospace", 16)
@@ -178,16 +179,8 @@ def main():
 
                 if event.key == pygame.K_ESCAPE:
                     running = False
-
-                # --- Atalhos para troca de modos de processamento de imagem ---
-                elif event.key == pygame.K_0 or event.key == pygame.K_KP0:
-                    image_processing.set_modo(0)
-                elif event.key == pygame.K_1 or event.key == pygame.K_KP1:
-                    image_processing.set_modo(1)
-                elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
-                    image_processing.set_modo(2)
-
-
+                elif event.key == pygame.K_f:
+                    painel.alternar()
                 elif event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
                     speed = min(MAX_SPEED, speed + SPEED_STEP)
                     robot.set_speed(speed)
@@ -200,6 +193,9 @@ def main():
                     flash_enabled = not flash_enabled
                     robot.set_flash(FLASH_ON_VALUE if flash_enabled else FLASH_OFF_VALUE)
                     logger.info("flash: %s", "on" if flash_enabled else "off")
+
+            painel.atualizar()
+            image_processing.set_config_pdi(painel.config)
 
             input_frame = source.read_frame()
             processed_frame = None
@@ -221,7 +217,7 @@ def main():
                     processing_ms = (time.perf_counter() - started_at) * 1000.0
 
             keys = pygame.key.get_pressed()
-            command = get_manual_command(keys) if control_enabled else "stop"
+            command = get_manual_command(keys) if control_enabled and not painel.aberto else "stop"
 
             # quando existe robô, ausência de referência visual sempre força parada.
             if keys[pygame.K_SPACE] or processed_frame is None:
@@ -289,7 +285,8 @@ def main():
                 draw_text(screen, "l: flash", 20, 610, tiny_font)
             else:
                 draw_text(screen, "modo de mídia: sem controle", 20, 544, tiny_font)
-            draw_text(screen, "esc: sair", 20, 632, tiny_font)
+            draw_text(screen, "F: ABRIR PAINEL DE PDI", 20, 632, tiny_font)
+            draw_text(screen, "esc: sair", 20, 654, tiny_font)
 
             if processing_error:
                 draw_text(screen, "erro no pipeline", 20, 684, small_font, color=(255, 120, 120))
@@ -312,6 +309,7 @@ def main():
         robot.set_flash(FLASH_OFF_VALUE)
         robot.close()
         source.release()
+        painel.encerrar()
         pygame.quit()
 
 
